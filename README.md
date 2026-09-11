@@ -72,6 +72,7 @@ graph LR
         I -->|Manual Re-trigger| J[DLQ Retry Endpoint]
         J -->|Reset Attempt Count| E
     end
+```
     
 ### Architecture Audit Coverage Matrix
 
