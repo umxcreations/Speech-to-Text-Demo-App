@@ -1,0 +1,6 @@
+{
+  "name": "Speech-to-Text Demo",
+  "description": "Production speech-to-text pipeline powered by Groq Whisper LPU inference, featuring live microphone recording, audio file upload, word-level timestamps, synchronized playback, and subtitle export.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
