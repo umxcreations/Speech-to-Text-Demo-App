@@ -1,4 +1,4 @@
-import { Router, type IRouter, type Request, type Response } from "express";
+import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
 import { createHash } from "node:crypto";
 import multer from "multer";
 import Groq, { toFile } from "groq-sdk";
@@ -12,6 +12,28 @@ const upload = multer({
     fileSize: 25 * 1024 * 1024, // 25 MB
   },
 });
+
+// Middleware to safely catch and format Multer errors into JSON responses
+const handleUpload = (req: Request, res: Response, next: NextFunction) => {
+  upload.single("file")(req, res, (err: any) => {
+    if (err) {
+      if (err instanceof multer.MulterError) {
+        if (err.code === "LIMIT_FILE_SIZE") {
+          return res.status(413).json({
+            error: "Audio file exceeds the 25 MB limit for Groq Whisper transcription. Please choose a smaller audio file.",
+          });
+        }
+        return res.status(400).json({
+          error: `Audio upload error (${err.code}): ${err.message}`,
+        });
+      }
+      return res.status(400).json({
+        error: err.message || "Failed to process audio file upload.",
+      });
+    }
+    next();
+  });
+};
 
 const SUPPORTED_MODELS = [
   {
@@ -80,8 +102,8 @@ transcriptionRouter.post("/transcribe/test-key", async (req: Request, res: Respo
 
 // 3. Real Production Speech-to-Text with Groq Whisper
 transcriptionRouter.post(
-  "/transcribe",
-  upload.single("file"),
+  ["/transcribe", "/transcribe/"],
+  handleUpload,
   async (req: Request, res: Response) => {
     try {
       // 1. Resolve API key
@@ -230,8 +252,13 @@ transcriptionRouter.post(
       });
     } catch (err: any) {
       console.error("[Groq STT Error]:", err);
-      res.status(500).json({
-        error: err?.message || "Failed to transcribe audio with Groq.",
+      const status = typeof err?.status === "number" ? err.status : 500;
+      const message =
+        err?.error?.message ||
+        err?.message ||
+        "Failed to transcribe audio with Groq Whisper.";
+      res.status(status).json({
+        error: message,
       });
     }
   },

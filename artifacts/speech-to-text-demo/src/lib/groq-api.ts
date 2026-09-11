@@ -57,12 +57,65 @@ export interface TranscribeParams {
   apiKey?: string;
 }
 
+async function parseResponse<T>(res: Response, fallbackError: string): Promise<T> {
+  const contentType = res.headers.get("content-type") || "";
+  const rawText = await res.text();
+
+  let data: any = null;
+  if (
+    contentType.includes("application/json") ||
+    rawText.trim().startsWith("{") ||
+    rawText.trim().startsWith("[")
+  ) {
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      data = null;
+    }
+  }
+
+  if (!res.ok) {
+    if (data && (data.error || data.message)) {
+      throw new Error(data.error || data.message);
+    }
+    if (res.status === 413) {
+      throw new Error(
+        "The audio file is too large (maximum 25 MB). Please choose a shorter or compressed audio file."
+      );
+    }
+    if (res.status === 401) {
+      throw new Error(
+        "Invalid or expired Groq API key. Please check your API key in the configuration modal."
+      );
+    }
+    if (res.status === 429) {
+      throw new Error(
+        "Groq API rate limit exceeded. Please wait a moment and try again."
+      );
+    }
+    if (res.status === 502 || res.status === 503 || res.status === 504) {
+      throw new Error(
+        "Speech recognition server is warming up or temporarily busy. Please retry in a few seconds."
+      );
+    }
+    if (rawText.trim().startsWith("<") || contentType.includes("text/html")) {
+      throw new Error(
+        `Server returned status ${res.status}. Please ensure the server is ready and try again.`
+      );
+    }
+    throw new Error(`${fallbackError} (HTTP ${res.status})`);
+  }
+
+  if (!data) {
+    throw new Error("Invalid response format received from speech server.");
+  }
+
+  return data as T;
+}
+
 export async function fetchGroqConfig(): Promise<GroqConfig> {
   const res = await fetch("/api/transcribe/config");
-  if (!res.ok) {
-    throw new Error(`Failed to load Groq configuration: ${res.statusText}`);
-  }
-  return res.json();
+  return parseResponse<GroqConfig>(res, "Failed to load Groq configuration");
 }
 
 export async function testGroqApiKey(apiKey?: string): Promise<{
@@ -76,7 +129,12 @@ export async function testGroqApiKey(apiKey?: string): Promise<{
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ apiKey: apiKey || undefined }),
   });
-  return res.json();
+  return parseResponse<{
+    success: boolean;
+    message?: string;
+    error?: string;
+    whisperModels?: string[];
+  }>(res, "Failed to validate Groq API key");
 }
 
 export async function transcribeWithGroq(
@@ -115,12 +173,10 @@ export async function transcribeWithGroq(
     body: formData,
   });
 
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.error || `Transcription failed with status ${res.status}`);
-  }
-
-  return data;
+  return parseResponse<TranscriptionResult>(
+    res,
+    "Transcription request failed"
+  );
 }
 
 export async function transcribeDemo(params: {
@@ -135,10 +191,8 @@ export async function transcribeDemo(params: {
     body: JSON.stringify(params),
   });
 
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.error || "Demo transcription request failed");
-  }
-
-  return data;
+  return parseResponse<TranscriptionResult>(
+    res,
+    "Demo transcription request failed"
+  );
 }
