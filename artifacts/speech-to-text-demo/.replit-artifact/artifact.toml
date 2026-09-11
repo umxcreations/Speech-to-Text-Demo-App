@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Speech-to-Text Demo"
+description = "A guided speech-to-text demonstration app that explains every processing step in plain language and technical detail, accepts audio uploads, and displays timestamped transcripts."
+version = "1.0.0"
+id = "artifacts/speech-to-text-demo"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22755
+
+[services.development]
+run = "pnpm --filter @workspace/speech-to-text-demo run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/speech-to-text-demo", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/speech-to-text-demo/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22755"
+BASE_PATH = "/"

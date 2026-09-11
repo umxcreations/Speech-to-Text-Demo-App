@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: transcription
+    description: Speech-to-text demonstration operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /transcribe/demo:
+    post:
+      operationId: createDemoTranscription
+      tags: [transcription]
+      summary: Run a speech-to-text demo
+      description: Accepts analyzed audio metadata and returns a deterministic timestamped transcript for demonstrating the end-to-end flow.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TranscriptionInput"
+      responses:
+        "200":
+          description: Demo transcription result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TranscriptionResult"
+        "400":
+          description: Invalid audio metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +60,88 @@ components:
           type: string
       required:
         - status
+    TranscriptionInput:
+      type: object
+      properties:
+        fileName:
+          type: string
+        mimeType:
+          type: string
+        fileSizeBytes:
+          type: integer
+          minimum: 0
+        durationSeconds:
+          type: number
+          minimum: 0
+        language:
+          type: ["string", "null"]
+      required:
+        - fileName
+        - mimeType
+        - fileSizeBytes
+        - durationSeconds
+    WordTimestamp:
+      type: object
+      properties:
+        word:
+          type: string
+        start:
+          type: number
+        end:
+          type: number
+        probability:
+          type: number
+      required: [word, start, end, probability]
+    TranscriptSegment:
+      type: object
+      properties:
+        id:
+          type: integer
+        start:
+          type: number
+        end:
+          type: number
+        text:
+          type: string
+        words:
+          type: array
+          items:
+            $ref: "#/components/schemas/WordTimestamp"
+      required: [id, start, end, text, words]
+    TranscriptionResult:
+      type: object
+      properties:
+        jobId:
+          type: string
+        status:
+          type: string
+        model:
+          type: string
+        detectedLanguage:
+          type: string
+        languageProbability:
+          type: number
+        audioDurationSeconds:
+          type: number
+        transcript:
+          type: string
+        segments:
+          type: array
+          items:
+            $ref: "#/components/schemas/TranscriptSegment"
+      required:
+        - jobId
+        - status
+        - model
+        - detectedLanguage
+        - languageProbability
+        - audioDurationSeconds
+        - transcript
+        - segments
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
 
