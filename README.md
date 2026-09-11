@@ -42,37 +42,17 @@ graph TD
         PostgresDB[(PostgreSQL 16 + JSONB Index)]
     end
 
-    Client - Sync Request - Router
-    Client - Async Submission - Router
+    Client -->|Sync Request| Router
+    Client -->|Async Submission| Router
     
-    Router - Memory Ingestion - MulterRAM
-    MulterRAM - Direct Execution - SyncEngine
-    MulterRAM - Enqueue Job - AsyncQueue
+    Router -->|Memory Ingestion| MulterRAM
+    MulterRAM -->|Direct Execution| SyncEngine
+    MulterRAM -->|Enqueue Job| AsyncQueue
 
-    SyncEngine - Sub-second Inference - GroqWhisper
-    AsyncQueue - Background Worker - GroqWhisper
-    AsyncQueue - Store Audio - S3Storage
-    AsyncQueue - Save State & Segments - PostgresDB
-```
-
-### Low-Level Architectural Decisions (LLD)
-
-```mermaid
-graph LR
-    subgraph Audio Signal & Queue Engine
-        A[Incoming Audio Buffer] - Validation - B{Payload Check}
-        B - Pass - C[In-Memory Signal Preprocessing]
-        C - Synchronous - D[Groq Whisper API]
-        C - Asynchronous - E[Task Queue Worker Pool]
-        
-        E - Execution - F{Process Success?}
-        F - Yes - G[Mark Completed & Save JSONB Transcript]
-        F - No (Attempt < 3) - H[Exponential Backoff Re-queue]
-        F - Failed (Max Retries Exceeded) - I[Move to Dead Letter Queue DLQ]
-        
-        I - Manual Re-trigger - J[DLQ Retry Endpoint]
-        J - Reset Attempt Count - E
-    end
+    SyncEngine -->|Sub-second Inference| GroqWhisper
+    AsyncQueue -->|Background Worker| GroqWhisper
+    AsyncQueue -->|Store Audio| S3Storage
+    AsyncQueue -->|Save State & Segments| PostgresDB
 ```
 
 ### Architecture Audit Coverage Matrix
