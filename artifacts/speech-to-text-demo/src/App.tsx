@@ -4,6 +4,7 @@ import {
   Activity,
   AlertCircle,
   AlertTriangle,
+  ArrowRight,
   AudioLines,
   Braces,
   Check,
@@ -20,6 +21,7 @@ import {
   Info,
   Key,
   Languages,
+  Layers,
   LoaderCircle,
   Mic,
   MousePointer2,
@@ -65,6 +67,7 @@ import {
 import { ApiKeyModal } from "./components/ApiKeyModal";
 import { AudioRecorder } from "./components/AudioRecorder";
 import { AudioPlaybackBar } from "./components/AudioPlaybackBar";
+import { SystemDesignView } from "./components/SystemDesignView";
 
 const queryClient = new QueryClient();
 
@@ -168,6 +171,8 @@ function StepMarker({
 }
 
 function Header({
+  activeSection,
+  setActiveSection,
   pipelineMode,
   setPipelineMode,
   hasServerKey,
@@ -176,6 +181,8 @@ function Header({
   onOpenKeyModal,
   onReset,
 }: {
+  activeSection: "pipeline" | "system-design";
+  setActiveSection: (sec: "pipeline" | "system-design") => void;
   pipelineMode: PipelineMode;
   setPipelineMode: (mode: PipelineMode) => void;
   hasServerKey: boolean;
@@ -188,53 +195,84 @@ function Header({
 
   return (
     <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#d9d9d2] px-5 py-4 lg:px-10">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e85b48] text-[#fffaf0] shadow-[3px_3px_0_#263b48]">
-          <AudioLines size={22} strokeWidth={2.4} />
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e85b48] text-[#fffaf0] shadow-[3px_3px_0_#263b48]">
+            <AudioLines size={22} strokeWidth={2.4} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 font-mono text-sm font-bold tracking-tight text-[#263b48]">
+              <span>signal</span>
+              <span className="text-[#e85b48]">/</span>
+              <span>groq-stt</span>
+              <span className="rounded bg-[#263b48]/10 px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-[#263b48]">
+                Production Pipeline
+              </span>
+            </div>
+            <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8a8c88]">
+              Audio Ingestion · ASR · Architecture
+            </div>
+          </div>
         </div>
-        <div>
-          <div className="flex items-center gap-2 font-mono text-sm font-bold tracking-tight text-[#263b48]">
-            <span>signal</span>
-            <span className="text-[#e85b48]">/</span>
-            <span>groq-stt</span>
-            <span className="rounded bg-[#263b48]/10 px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-[#263b48]">
-              LPU Inference
-            </span>
-          </div>
-          <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8a8c88]">
-            Speech-to-text pipeline
-          </div>
+
+        {/* Primary Part 1 vs Part 2 Section Switcher */}
+        <div className="flex items-center rounded-xl border border-[#263b48] bg-[#263b48] p-1 text-xs">
+          <button
+            type="button"
+            onClick={() => setActiveSection("pipeline")}
+            className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 font-bold transition ${
+              activeSection === "pipeline"
+                ? "bg-[#fffaf0] text-[#263b48] shadow-sm"
+                : "text-[#cbd5e1] hover:text-white"
+            }`}
+          >
+            <AudioLines size={13} />
+            <span>Part 1: Pipeline</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveSection("system-design")}
+            className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 font-bold transition ${
+              activeSection === "system-design"
+                ? "bg-[#e85b48] text-[#fffaf0] shadow-sm"
+                : "text-[#cbd5e1] hover:text-white"
+            }`}
+          >
+            <Layers size={13} />
+            <span>Part 2: System Design</span>
+          </button>
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2.5">
-        {/* Pipeline engine mode selector */}
-        <div className="flex items-center rounded-xl border border-[#d9d9d2] bg-[#fffaf0] p-1 shadow-sm">
-          <button
-            type="button"
-            onClick={() => setPipelineMode("groq")}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
-              pipelineMode === "groq"
-                ? "bg-[#263b48] text-[#fffaf0] shadow-sm"
-                : "text-[#6b716f] hover:text-[#263b48]"
-            }`}
-          >
-            <Zap size={13} className={pipelineMode === "groq" ? "text-[#e85b48]" : ""} />
-            <span>Groq Whisper</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setPipelineMode("demo")}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
-              pipelineMode === "demo"
-                ? "bg-[#263b48] text-[#fffaf0] shadow-sm"
-                : "text-[#6b716f] hover:text-[#263b48]"
-            }`}
-          >
-            <Sparkles size={13} />
-            <span>Demo Fixture</span>
-          </button>
-        </div>
+        {activeSection === "pipeline" && (
+          <div className="flex items-center rounded-xl border border-[#d9d9d2] bg-[#fffaf0] p-1 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setPipelineMode("groq")}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                pipelineMode === "groq"
+                  ? "bg-[#263b48] text-[#fffaf0] shadow-sm"
+                  : "text-[#6b716f] hover:text-[#263b48]"
+              }`}
+            >
+              <Zap size={13} className={pipelineMode === "groq" ? "text-[#e85b48]" : ""} />
+              <span>Groq Whisper</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPipelineMode("demo")}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                pipelineMode === "demo"
+                  ? "bg-[#263b48] text-[#fffaf0] shadow-sm"
+                  : "text-[#6b716f] hover:text-[#263b48]"
+              }`}
+            >
+              <Sparkles size={13} />
+              <span>Demo Fixture</span>
+            </button>
+          </div>
+        )}
 
         {/* API key button / status */}
         <button
@@ -270,7 +308,7 @@ function Header({
           data-testid="button-reset-demo"
         >
           <RotateCcw size={14} className="transition-transform group-hover:-rotate-45" />
-          <span>Reset</span>
+          <span className="hidden sm:inline">Reset</span>
         </button>
       </div>
     </header>
@@ -570,6 +608,7 @@ function ResultStat({
 
 export function DemoApp() {
   const health = useHealthCheck();
+  const [activeSection, setActiveSection] = useState<"pipeline" | "system-design">("pipeline");
   const [pipelineMode, setPipelineMode] = useState<PipelineMode>("groq");
 
   // Groq config & custom keys
@@ -793,6 +832,8 @@ export function DemoApp() {
       <div className="noise-overlay" />
 
       <Header
+        activeSection={activeSection}
+        setActiveSection={setActiveSection}
         pipelineMode={pipelineMode}
         setPipelineMode={setPipelineMode}
         hasServerKey={Boolean(groqConfig?.hasGroqKey)}
@@ -812,6 +853,9 @@ export function DemoApp() {
       />
 
       <main className="mx-auto max-w-[1440px] px-5 pb-20 pt-8 lg:px-10 lg:pt-12">
+        {activeSection === "system-design" ? (
+          <SystemDesignView />
+        ) : (
         <div className="grid gap-10 lg:grid-cols-[220px_minmax(0,1fr)] xl:gap-14">
           {/* Step navigator sidebar */}
           <aside className="lg:sticky lg:top-8 lg:h-fit">
@@ -821,22 +865,11 @@ export function DemoApp() {
                 pipeline stages
               </span>
             </div>
-            <nav className="space-y-5" aria-label="Pipeline steps">
+            <nav className="space-y-4" aria-label="Pipeline steps">
               <StepMarker
                 number="01"
-                label="Engine ready"
-                description={
-                  pipelineMode === "groq"
-                    ? "Groq LPU active"
-                    : "Demo endpoint"
-                }
-                state={currentStep === "ready" ? "current" : "complete"}
-                onClick={() => jumpTo("ready")}
-              />
-              <StepMarker
-                number="02"
-                label="Inspect audio"
-                description="Upload, record or preset"
+                label="Ingestion & Signal"
+                description="FFmpeg 16kHz mono PCM"
                 state={
                   input
                     ? "complete"
@@ -847,9 +880,9 @@ export function DemoApp() {
                 onClick={() => jumpTo("inspect")}
               />
               <StepMarker
-                number="03"
-                label="Groq Whisper"
-                description="Sub-second inference"
+                number="02"
+                label="Whisper Inference"
+                description="VAD & Groq LPU"
                 state={
                   hasResult
                     ? "complete"
@@ -860,16 +893,37 @@ export function DemoApp() {
                 onClick={input ? handleRunTranscription : undefined}
               />
               <StepMarker
-                number="04"
-                label="Explore transcript"
-                description="Word timestamps & export"
+                number="03"
+                label="Downstream Words"
+                description="Word sync & export"
                 state={hasResult ? "complete" : "upcoming"}
                 onClick={() => jumpTo("result")}
               />
             </nav>
 
+            {/* Architecture console quick switch */}
+            <div className="mt-6 rounded-2xl border border-[#d5d4cb] bg-[#fffaf0] p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-[#e85b48]">
+                <Layers size={14} />
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider">
+                  Part 2 Console
+                </span>
+              </div>
+              <p className="mt-1 text-[11px] leading-relaxed text-[#596663]">
+                Concurrent uploads, S3 storage, exponential backoff retries & DLQ.
+              </p>
+              <button
+                type="button"
+                onClick={() => setActiveSection("system-design")}
+                className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#263b48] py-2 text-xs font-bold text-white shadow-sm hover:bg-[#1a2933]"
+              >
+                <span>System Design</span>
+                <ArrowRight size={13} />
+              </button>
+            </div>
+
             {/* Hardware badge */}
-            <div className="mt-8 rounded-2xl border border-[#d7d6ce] bg-[#fffaf0] p-4">
+            <div className="mt-4 rounded-2xl border border-[#d7d6ce] bg-[#fffaf0] p-4">
               <div className="mb-2 flex items-center gap-2 text-[#263b48]">
                 <Cpu size={15} className="text-[#e85b48]" />
                 <span className="text-xs font-bold">Groq LPU Acceleration</span>
@@ -1415,6 +1469,27 @@ export function DemoApp() {
                   />
                 </div>
 
+                {/* In-Memory Signal Preprocessor Standardization Banner */}
+                {result.audioMetadata && (
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#b9d8cb] bg-[#eef7f2] px-4 py-2.5 text-xs text-[#24634c]">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#24634c] text-white">
+                        <Check size={11} strokeWidth={3} />
+                      </span>
+                      <span className="font-bold">
+                        In-Memory Signal Standardization (FFmpeg pipe:0 → pipe:1)
+                      </span>
+                      <span className="text-[#557b6d]">|</span>
+                      <span>16,000 Hz Mono PCM</span>
+                    </div>
+                    <div className="flex items-center gap-4 font-mono text-[11px]">
+                      <span>Speech Ratio: {(result.audioMetadata.speechRatio * 100).toFixed(1)}%</span>
+                      <span>RMS: {result.audioMetadata.rmsPower}</span>
+                      <span>Peak: {result.audioMetadata.peakAmplitude}</span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Synchronized Audio Player Bar */}
                 {input.objectUrl && (
                   <AudioPlaybackBar
@@ -1618,6 +1693,7 @@ export function DemoApp() {
             )}
           </div>
         </div>
+        )}
       </main>
 
       {/* Groq API Key Configuration Modal */}
