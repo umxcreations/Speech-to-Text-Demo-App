@@ -55,6 +55,24 @@ graph TD
     AsyncQueue -->|Save State & Segments| PostgresDB
 ```
 
+### Low-Level Architectural Decisions (LLD)
+Code snippet
+graph LR
+    subgraph Audio Signal & Queue Engine
+        A[Incoming Audio Buffer] -->|Validation| B{Payload Check}
+        B -->|Pass| C[In-Memory Signal Preprocessing]
+        C -->|Synchronous| D[Groq Whisper API]
+        C -->|Asynchronous| E[Task Queue Worker Pool]
+        
+        E -->|Execution| F{Process Success?}
+        F -->|Yes| G[Mark Completed & Save JSONB Transcript]
+        F -->|No: Attempt < 3| H[Exponential Backoff Re-queue]
+        F -->|Failed: Max Retries Exceeded| I[Move to Dead Letter Queue DLQ]
+        
+        I -->|Manual Re-trigger| J[DLQ Retry Endpoint]
+        J -->|Reset Attempt Count| E
+    end
+    
 ### Architecture Audit Coverage Matrix
 
 | Architectural Subsystem | Design Decision | Rationale / Benefit |
