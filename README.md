@@ -56,7 +56,7 @@ graph TD
 ```
 
 ### Low-Level Architectural Decisions (LLD)
-Code snippet
+```mermaid
 graph LR
     subgraph Audio Signal & Queue Engine
         A[Incoming Audio Buffer] -->|Validation| B{Payload Check}
